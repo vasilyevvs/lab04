@@ -1,66 +1,69 @@
 // Copyright 2021 vasilyevvs
 
+#include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
 #include <iostream>
-#include <map>
+#include <list>
+#include <stdexcept>
+#include <string>
 #include <source.hpp>
-#include <sstream>
-#include "boost/regex.hpp"
-using boost::regex;
-using std::stringstream;
-using std::cout;
 
-std::vector<string> split(string& s, char separator)
-{
-  std::vector<string> seglist;
-  string segment;
-  stringstream ss(s);
-  while (std::getline(ss, segment, separator))
-    seglist.push_back(segment);
-  return seglist;
-}
-string printDirectory(path dirPath, std::ostream& os)
-{
-  const boost::regex reg("balance_[0-9]{8}_[0-9]{8}.txt");
-  std::map<string , std::pair<int, int>> blc;
+void start(){
+  std::vector<std::string> ids;
+  std::vector<int> dates;
+  std::vector<int> files;
+  std::vector<std::string> folders;
+  std::string path;
+  std::cin >> path;
+  const std::string target_path(path);
+  const boost::regex my_filter("balance_(\\d{8})_(\\d{8}).txt");
 
-  for (const directory_entry& i : directory_iterator{dirPath})
+  boost::filesystem::directory_iterator end_itr_dir;
+  for (boost::filesystem::directory_iterator j( target_path );
+       j != end_itr_dir; ++j)
   {
-    if (!bfs::is_regular_file(i.status()))
-      continue;
-    boost::smatch what;
-    string filename = i.path().filename().string();
-
-    if (!boost::regex_match( filename, what, reg))
-      continue;
-    os << dirPath.filename().string()
-       << " " << filename << std::endl;
-    std::ifstream file(i.path().string());
-    if (!file)
-      throw std::runtime_error{"unable to open file: " + i.path().string()};
-
-    const std::size_t& size = bfs::file_size(i.path());
-    string content(size, '\0');
-    file.read(content.data(), size);
-    auto parts = split(content, '|');
-    int date = std::stoi(parts[2]);
-    std::string bal_id = parts[1];
-
-    if (blc.find(bal_id) == blc.end())
-      blc[bal_id] = {1, date};
-    else
+    boost::filesystem::directory_iterator end_itr;
+    if (!boost::filesystem::is_regular_file(j->status()))
     {
-      blc[bal_id].first++;
-      if (blc[bal_id].second < date)
-        blc[bal_id].second = date;
+      for (boost::filesystem::directory_iterator i(j->path());
+           i != end_itr; ++i)
+      {
+        boost::smatch what;
+        if (boost::regex_match(
+                i->path().filename().string(), what, my_filter)){
+          std::cout << j->path().filename().string() << " " <<
+              i->path().filename().string() << std::endl;
+          boost::filesystem::ifstream fileHandler(i->path().string());
+          std::string line;
+          getline(fileHandler, line);
+          std::string id = line.substr(2, 8);
+          int date = std::stoi(line.substr(11, 8));
+          bool flag = true;
+          int count = 0;
+          for (auto l = ids.begin(); l != ids.end(); l++) {
+            if (*l == id) {
+              flag = false;
+              if (date > dates[count]) dates[count] = date;
+              files[count]++;
+            }
+            count++;
+          }
+          if (flag)
+          {
+            ids.push_back(id);
+            dates.push_back(date);
+            files.push_back(1);
+            folders.push_back(j->path().filename().string());
+          }
+          std::cout << id << std::endl;
+          std::cout << date << std::endl;
+          std::cout << line << std::endl;
+        }
+      }
     }
-    file.close();
   }
-  stringstream ss;
-  for ( const auto &[bid, data] : blc )
-  {
-    ss << "broker:" << dirPath.filename().string()
-       << " account:" << bid << " files:" << data.first
-       << " lastdate:" << data.second << std::endl;
+  for (size_t i = 0; i < ids.size(); i++){
+    std::cout << "-> broker: " << folders[i] << " account: " << ids[i] <<
+        " last update: " << dates[i] << " files: " << files[i] << std::endl;
   }
-  return ss.str();
 }
