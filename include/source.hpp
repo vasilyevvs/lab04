@@ -1,6 +1,6 @@
-// Copyright 2021 wm8
-#ifndef INCLUDE_UTILS_HPP_
-#define INCLUDE_UTILS_HPP_
+// Copyright 2021 vasilyevvs
+#ifndef INCLUDE_SOUTCE_HPP_
+#define INCLUDE_SOURCE_HPP_
 #include <boost/filesystem.hpp>
 #include <vector>
 #include <string>
@@ -12,4 +12,4 @@ using bfs::directory_entry;
 auto example() -> void;
 std::vector<std::string> split(std::string s);
 string printDirectory(path dirPath, std::ostream& os);
-#endif // INCLUDE_UTILS_HPP_
+#endif // INCLUDE_SOURCE_HPP_
