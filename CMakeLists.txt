@@ -35,7 +35,7 @@ find_package(Boost CONFIG REQUIRED system filesystem regex)
 
 add_library(${PROJECT_NAME} STATIC
   # enum your files and delete this comment
-        ${CMAKE_CURRENT_SOURCE_DIR}/sources/utils.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/sources/source.cpp
 )
 target_link_libraries(${PROJECT_NAME} Boost::system Boost::filesystem Boost::regex)
 
